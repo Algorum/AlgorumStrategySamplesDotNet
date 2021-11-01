@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31112.23
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Algorum.Strategy.GoldenCrossover", "Algorum.Strategy.GoldenCrossover\Algorum.Strategy.GoldenCrossover.csproj", "{5FF6698E-991B-4265-9745-84FF48AFDF0D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Algorum.Strategy.SupportResistance", "Algorum.Strategy.SupportResistance\Algorum.Strategy.SupportResistance.csproj", "{6317DA45-DB49-4CF8-960E-86B6E6795107}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Algorum.Strategy.TrendReversal", "Algorum.Strategy.TrendReversal\Algorum.Strategy.TrendReversal.csproj", "{08145ED6-9E01-4136-89D9-D6918C8ED583}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5FF6698E-991B-4265-9745-84FF48AFDF0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FF6698E-991B-4265-9745-84FF48AFDF0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FF6698E-991B-4265-9745-84FF48AFDF0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FF6698E-991B-4265-9745-84FF48AFDF0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6317DA45-DB49-4CF8-960E-86B6E6795107}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6317DA45-DB49-4CF8-960E-86B6E6795107}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6317DA45-DB49-4CF8-960E-86B6E6795107}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6317DA45-DB49-4CF8-960E-86B6E6795107}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08145ED6-9E01-4136-89D9-D6918C8ED583}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08145ED6-9E01-4136-89D9-D6918C8ED583}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08145ED6-9E01-4136-89D9-D6918C8ED583}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08145ED6-9E01-4136-89D9-D6918C8ED583}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D8BBF5F7-2FDB-4899-9004-1FC13B305EFF}
+	EndGlobalSection
+EndGlobal

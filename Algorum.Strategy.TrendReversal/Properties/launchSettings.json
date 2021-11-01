@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Algorum.Strategy.TrendReversal": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

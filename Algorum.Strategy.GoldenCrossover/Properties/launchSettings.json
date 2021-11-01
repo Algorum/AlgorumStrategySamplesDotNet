@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Aditya.Strategy.RSI": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

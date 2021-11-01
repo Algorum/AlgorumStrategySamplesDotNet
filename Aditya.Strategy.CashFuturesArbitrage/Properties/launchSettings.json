@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Aditya.Strategy.CashFuturesArbitrage": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

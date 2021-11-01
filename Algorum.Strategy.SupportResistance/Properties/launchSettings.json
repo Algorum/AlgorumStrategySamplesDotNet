@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Algorum.Strategy.SupportResistance": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
