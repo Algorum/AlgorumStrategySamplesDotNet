@@ -6,7 +6,6 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
 COPY ["Algorum.Strategy.TrendReversal/Algorum.Strategy.TrendReversal.csproj", "Algorum.Strategy.TrendReversal/"]
-COPY ["Algorum.Quant.Types/Algorum.Quant.Types.csproj", "Algorum.Quant.Types/"]
 RUN dotnet restore "Algorum.Strategy.TrendReversal/Algorum.Strategy.TrendReversal.csproj"
 COPY . .
 WORKDIR "/src/Algorum.Strategy.TrendReversal"
