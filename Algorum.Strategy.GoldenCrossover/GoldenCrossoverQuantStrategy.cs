@@ -27,7 +27,7 @@ namespace Algorum.Strategy.GoldenCrossover
       }
 
       private const double Capital = 100000;
-      private const double Leverage = 1; // 1x Leverage on margin by Brokerage
+      private const double Leverage = 3; // 3x Leverage on Capital
 
       private Symbol _symbol;
       private IIndicatorEvaluator _indicatorEvaluator;
@@ -67,7 +67,11 @@ namespace Algorum.Strategy.GoldenCrossover
          }
 
          // Create our stock symbol object
-         _symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "AAPL" };
+         // For India users
+         _symbol = new Symbol() { SymbolType = SymbolType.FuturesIndex, Ticker = "NIFTY" };
+
+         // For USA users
+         //_symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "AAPL" };
 
          // Create the technical indicator evaluator that can work with minute candles of the stock
          // This will auto sync with the new tick data that would be coming in for this symbol
