@@ -67,7 +67,11 @@ namespace Algorum.Strategy.TrendReversal
          }
 
          // Create our stock symbol object
-         _symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "MSFT" };
+         // For India users
+         _symbol = new Symbol() { SymbolType = SymbolType.FuturesIndex, Ticker = "NIFTY" };
+
+         // For USA users
+         //_symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "AAPL" };
 
          // Create the technical indicator evaluator that can work with minute candles of the stock
          // This will auto sync with the new tick data that would be coming in for this symbol

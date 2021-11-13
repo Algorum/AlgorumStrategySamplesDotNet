@@ -9,8 +9,8 @@
     <Product>Algorum</Product>
     <Copyright>Algorum Software Private Limited</Copyright>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-    <Version>1.0.2</Version>
-    <PackageReleaseNotes>Updated the Algorum.Quant.Types reference package version to 1.0.6</PackageReleaseNotes>
+    <Version>1.0.3</Version>
+    <PackageReleaseNotes>Minor code changes in the initialization method.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
