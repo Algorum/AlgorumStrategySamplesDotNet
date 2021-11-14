@@ -28,6 +28,8 @@ namespace Algorum.Strategy.TrendReversal
 
       private const double Capital = 100000;
       private const double Leverage = 1; // 1x Leverage on margin by Brokerage
+      private const int DIRECTION_UP = 1;
+      private const int DIRECTION_DOWN = 2;
 
       private Symbol _symbol;
       private IIndicatorEvaluator _indicatorEvaluator;
@@ -178,10 +180,12 @@ namespace Algorum.Strategy.TrendReversal
             _state.LastTick = tickData;
          }
 
-         if ( !_state.DirectionReversed && longDirection == 1 && shortDirection == 2 )
+         // We wait until the long direction is going up and short direction is going down
+         if ( !_state.DirectionReversed && longDirection == DIRECTION_UP && shortDirection == DIRECTION_DOWN )
             _state.DirectionReversed = true;
 
-         if ( longDirection == 2 && longStrength >= 7 && shortDirection == 1 && shortStrength >= 5 && _state.DirectionReversed &&
+         // We BUY the stock when the long direction was strongly DOWN and the short direction just started moving UP
+         if ( longDirection == DIRECTION_DOWN && longStrength >= 7 && shortDirection == DIRECTION_UP && shortStrength >= 5 && _state.DirectionReversed &&
             ( !_state.Bought ) && ( string.IsNullOrWhiteSpace( _state.CurrentOrderId ) ) )
          {
             _state.DirectionReversed = false;
@@ -198,7 +202,7 @@ namespace Algorum.Strategy.TrendReversal
                Symbol = _symbol,
                Timestamp = tickData.Timestamp,
                TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
-               TriggerPrice = tickData.LTP + 0.1,
+               TriggerPrice = tickData.LTP,
                OrderDirection = OrderDirection.Buy,
                Tag = _state.CurrentOrderId
             } );
@@ -216,8 +220,8 @@ namespace Algorum.Strategy.TrendReversal
          else if ( _state.CurrentOrder != null )
          {
             if ( (
-                  ( tickData.LTP - _state.CurrentOrder.AveragePrice >= _state.CurrentOrder.AveragePrice * 0.35 / 100 ) ||
-                  ( _state.CurrentOrder.AveragePrice - tickData.LTP >= _state.CurrentOrder.AveragePrice * 0.25 / 100 ) )
+                  ( tickData.LTP - _state.CurrentOrder.AveragePrice >= _state.CurrentOrder.AveragePrice * 0.25 / 100 ) ||
+                  ( _state.CurrentOrder.AveragePrice - tickData.LTP >= _state.CurrentOrder.AveragePrice * 0.50 / 100 ) )
                   &&
                ( _state.Bought ) )
             {

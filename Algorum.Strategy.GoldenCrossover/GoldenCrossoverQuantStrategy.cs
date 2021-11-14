@@ -192,7 +192,7 @@ namespace Algorum.Strategy.GoldenCrossover
                Symbol = _symbol,
                Timestamp = tickData.Timestamp,
                TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
-               TriggerPrice = tickData.LTP + 0.1,
+               TriggerPrice = tickData.LTP,
                OrderDirection = OrderDirection.Buy,
                Tag = _state.CurrentOrderId
             } );

@@ -168,19 +168,19 @@ namespace Algorum.Strategy.SupportResistance
          _state.CurrentTick = tickData;
 
          // Get the support and resistance values
-         var (sv, sr, rv, rr) = await _indicatorEvaluator.SUPPORTRESISTANCEAsync( 60, 0, 10 );
+         var (supportValue, supportScore, resistanceValue, resistanceScore) = await _indicatorEvaluator.SUPPORTRESISTANCEAsync( 60, 0, 10 );
 
          if ( ( _state.LastTick == null ) || ( tickData.Timestamp - _state.LastTick.Timestamp ).TotalMinutes >= 1 )
          {
-            await LogAsync( LogLevel.Debug, $"{tickData.Timestamp}, {tickData.LTP}, sv {sv}, sr {sr}, " +
-               $"rv {rv}, rr {rr}" );
+            await LogAsync( LogLevel.Debug, $"{tickData.Timestamp}, {tickData.LTP}, sv {supportValue}, ss {supportScore}, " +
+               $"rv {resistanceValue}, rs {resistanceScore}" );
             _state.LastTick = tickData;
          }
 
-         if ( !_state.TouchedSupport && sr > 0 && tickData.LTP <= sv && !_state.Bought )
+         if ( !_state.TouchedSupport && supportScore > 0 && tickData.LTP <= supportValue && !_state.Bought )
             _state.TouchedSupport = true;
 
-         if ( sr > 0 && tickData.LTP > sv && rr > 0 && tickData.LTP < rv && _state.TouchedSupport &&
+         if ( supportScore > 0 && tickData.LTP > supportValue && resistanceScore > 0 && tickData.LTP < resistanceValue && _state.TouchedSupport &&
             ( !_state.Bought ) && ( string.IsNullOrWhiteSpace( _state.CurrentOrderId ) ) )
          {
             _state.TouchedSupport = false;
@@ -197,7 +197,7 @@ namespace Algorum.Strategy.SupportResistance
                Symbol = _symbol,
                Timestamp = tickData.Timestamp,
                TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
-               TriggerPrice = tickData.LTP + 0.1,
+               TriggerPrice = tickData.LTP,
                OrderDirection = OrderDirection.Buy,
                Tag = _state.CurrentOrderId
             } );
