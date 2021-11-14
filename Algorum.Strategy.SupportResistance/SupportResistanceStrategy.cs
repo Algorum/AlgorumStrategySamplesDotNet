@@ -177,10 +177,14 @@ namespace Algorum.Strategy.SupportResistance
             _state.LastTick = tickData;
          }
 
+         // We wait until the stock price touches below the support value
          if ( !_state.TouchedSupport && supportScore > 0 && tickData.LTP <= supportValue && !_state.Bought )
             _state.TouchedSupport = true;
 
-         if ( supportScore > 0 && tickData.LTP > supportValue && resistanceScore > 0 && tickData.LTP < resistanceValue && _state.TouchedSupport &&
+         // We BUY the stock when the stock price touches below the support value and then moves above the
+         // support value, and is below the half the distance to the resistance value
+         if ( supportScore > 0 && tickData.LTP > supportValue && resistanceScore > 0 &&
+            tickData.LTP < resistanceValue - ( ( resistanceValue - tickData.LTP ) / 2 ) && _state.TouchedSupport &&
             ( !_state.Bought ) && ( string.IsNullOrWhiteSpace( _state.CurrentOrderId ) ) )
          {
             _state.TouchedSupport = false;
