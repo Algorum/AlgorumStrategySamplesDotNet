@@ -45,7 +45,8 @@ namespace Algorum.Strategy.TrendReversal
                ApiKey = bkApiKey,
                ApiSecretKey = bkApiSecretKey,
                SamplingTimeInSeconds = samplingTime,
-               BrokeragePlatform = brokeragePlatform
+               BrokeragePlatform = brokeragePlatform,
+               Capital = TrendReversalStrategy.Capital
             } );
          }
          else
@@ -59,7 +60,8 @@ namespace Algorum.Strategy.TrendReversal
                Password = password,
                TwoFactorAuth = twoFactorAuth,
                SamplingTimeInSeconds = samplingTime,
-               BrokeragePlatform = brokeragePlatform
+               BrokeragePlatform = brokeragePlatform,
+               Capital = TrendReversalStrategy.Capital
             } );
          }
 

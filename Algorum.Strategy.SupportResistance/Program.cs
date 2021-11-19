@@ -45,7 +45,8 @@ namespace Algorum.Strategy.SupportResistance
                ApiKey = bkApiKey,
                ApiSecretKey = bkApiSecretKey,
                SamplingTimeInSeconds = samplingTime,
-               BrokeragePlatform = brokeragePlatform
+               BrokeragePlatform = brokeragePlatform,
+               Capital = SupportResistanceStrategy.Capital
             } );
          }
          else
@@ -59,7 +60,8 @@ namespace Algorum.Strategy.SupportResistance
                Password = password,
                TwoFactorAuth = twoFactorAuth,
                SamplingTimeInSeconds = samplingTime,
-               BrokeragePlatform = brokeragePlatform
+               BrokeragePlatform = brokeragePlatform,
+               Capital = SupportResistanceStrategy.Capital
             } );
          }
 

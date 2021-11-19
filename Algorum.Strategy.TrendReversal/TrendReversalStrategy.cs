@@ -26,7 +26,7 @@ namespace Algorum.Strategy.TrendReversal
          public bool DirectionReversed;
       }
 
-      private const double Capital = 100000;
+      public const double Capital = 100000;
       private const double Leverage = 1; // 1x Leverage on margin by Brokerage
       private const int DIRECTION_UP = 1;
       private const int DIRECTION_DOWN = 2;

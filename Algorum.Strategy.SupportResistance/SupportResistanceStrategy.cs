@@ -26,7 +26,7 @@ namespace Algorum.Strategy.SupportResistance
          public bool TouchedSupport;
       }
 
-      private const double Capital = 100000;
+      public const double Capital = 100000;
       private const double Leverage = 1; // 1x Leverage on margin by Brokerage
 
       private Symbol _symbol;

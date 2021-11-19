@@ -45,7 +45,8 @@ namespace Algorum.Strategy.GoldenCrossover
                ApiKey = bkApiKey,
                ApiSecretKey = bkApiSecretKey,
                SamplingTimeInSeconds = samplingTime,
-               BrokeragePlatform = brokeragePlatform
+               BrokeragePlatform = brokeragePlatform,
+               Capital = GoldenCrossoverQuantStrategy.Capital
             } );
          }
          else
@@ -59,7 +60,8 @@ namespace Algorum.Strategy.GoldenCrossover
                Password = password,
                TwoFactorAuth = twoFactorAuth,
                SamplingTimeInSeconds = samplingTime,
-               BrokeragePlatform = brokeragePlatform
+               BrokeragePlatform = brokeragePlatform,
+               Capital = GoldenCrossoverQuantStrategy.Capital
             } );
          }
 

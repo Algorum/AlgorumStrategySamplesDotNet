@@ -26,7 +26,7 @@ namespace Algorum.Strategy.GoldenCrossover
          public CrossAbove CrossAboveObj;
       }
 
-      private const double Capital = 100000;
+      public const double Capital = 100000;
       private const double Leverage = 3; // 3x Leverage on Capital
 
       private Symbol _symbol;
