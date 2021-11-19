@@ -71,7 +71,7 @@ namespace Algorum.Strategy.GoldenCrossover
          _symbol = new Symbol() { SymbolType = SymbolType.FuturesIndex, Ticker = "NIFTY" };
 
          // For USA users
-         //_symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "AAPL" };
+         //_symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "MSFT" };
 
          // Create the technical indicator evaluator that can work with minute candles of the stock
          // This will auto sync with the new tick data that would be coming in for this symbol
@@ -79,7 +79,7 @@ namespace Algorum.Strategy.GoldenCrossover
          {
             Symbol = _symbol,
             CandlePeriod = CandlePeriod.Minute,
-            PeriodSpan = 5
+            PeriodSpan = 1
          } );
 
          // Subscribe to the symbols we want (one second tick data)
@@ -194,6 +194,8 @@ namespace Algorum.Strategy.GoldenCrossover
                TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
                TriggerPrice = tickData.LTP,
                OrderDirection = OrderDirection.Buy,
+               SlippageType = SlippageType.TIME,
+               Slippage = 1000,
                Tag = _state.CurrentOrderId
             } );
 
@@ -231,6 +233,8 @@ namespace Algorum.Strategy.GoldenCrossover
                   TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
                   TriggerPrice = tickData.LTP,
                   OrderDirection = OrderDirection.Sell,
+                  SlippageType = SlippageType.TIME,
+                  Slippage = 1000,
                   Tag = _state.CurrentOrderId
                } );
 

@@ -9,7 +9,7 @@
     <Product>Algorum</Product>
     <Copyright>Algorum Software Private Limited</Copyright>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-    <Version>1.0.5</Version>
+    <Version>1.0.6</Version>
     <PackageReleaseNotes>Minor code changes to the strategy.</PackageReleaseNotes>
   </PropertyGroup>
 

@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <Authors>Algorum</Authors>
     <Company>Algorum Software Private Limited</Company>
     <Product>Algorum</Product>

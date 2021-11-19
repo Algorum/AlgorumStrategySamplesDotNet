@@ -203,6 +203,8 @@ namespace Algorum.Strategy.SupportResistance
                TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
                TriggerPrice = tickData.LTP,
                OrderDirection = OrderDirection.Buy,
+               SlippageType = SlippageType.TIME,
+               Slippage = 1000,
                Tag = _state.CurrentOrderId
             } );
 
@@ -240,6 +242,8 @@ namespace Algorum.Strategy.SupportResistance
                   TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
                   TriggerPrice = tickData.LTP,
                   OrderDirection = OrderDirection.Sell,
+                  SlippageType = SlippageType.TIME,
+                  Slippage = 1000,
                   Tag = _state.CurrentOrderId
                } );
 
