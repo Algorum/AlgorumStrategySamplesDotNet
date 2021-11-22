@@ -13,7 +13,7 @@ namespace Algorum.Strategy.SupportResistance
    /// and implement the abstract methods to receive events like 
    /// tick data, order update, etc.,
    /// </summary>
-   public class SupportResistanceStrategy : QuantEngineClient
+   public class RSIStrategy : QuantEngineClient
    {
       private class State
       {
@@ -23,7 +23,8 @@ namespace Algorum.Strategy.SupportResistance
          public List<Order> Orders;
          public string CurrentOrderId;
          public Order CurrentOrder;
-         public bool TouchedSupport;
+         public CrossBelow CrossBelowObj;
+         public bool DayChanged;
       }
 
       public const double Capital = 100000;
@@ -34,21 +35,21 @@ namespace Algorum.Strategy.SupportResistance
       private State _state;
 
       /// <summary>
-      /// Helps create SupportResistanceStrategy class and initialize asynchornously
+      /// Helps create strategy class object class and initialize asynchornously
       /// </summary>
       /// <param name="url">URL of the Quant Engine Server</param>
       /// <param name="apiKey">User Algorum API Key</param>
       /// <param name="launchMode">Launch mode of this strategy</param>
       /// <param name="sid">Unique Strategy Id</param>
-      /// <returns>Instance of SupportResistanceStrategy class</returns>
-      public static async Task<SupportResistanceStrategy> GetInstanceAsync( string url, string apiKey, StrategyLaunchMode launchMode, string sid )
+      /// <returns>Instance of RSIStrategy class</returns>
+      public static async Task<RSIStrategy> GetInstanceAsync( string url, string apiKey, StrategyLaunchMode launchMode, string sid )
       {
-         var strategy = new SupportResistanceStrategy( url, apiKey, launchMode, sid );
+         var strategy = new RSIStrategy( url, apiKey, launchMode, sid );
          await strategy.InitializeAsync();
          return strategy;
       }
 
-      private SupportResistanceStrategy( string url, string apiKey, StrategyLaunchMode launchMode, string sid )
+      private RSIStrategy( string url, string apiKey, StrategyLaunchMode launchMode, string sid )
          : base( url, apiKey, launchMode, sid )
       {
          // No-Op
@@ -63,15 +64,16 @@ namespace Algorum.Strategy.SupportResistance
          {
             _state = new State();
             _state.Orders = new List<Order>();
-            _state.TouchedSupport = false;
+            _state.CrossBelowObj = new CrossBelow();
+            _state.DayChanged = false;
          }
 
          // Create our stock symbol object
          // For India users
-         _symbol = new Symbol() { SymbolType = SymbolType.FuturesIndex, Ticker = "NIFTY" };
+         //_symbol = new Symbol() { SymbolType = SymbolType.FuturesIndex, Ticker = "NIFTY" };
 
          // For USA users
-         //_symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "AAPL" };
+         _symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "AAPL" };
 
          // Create the technical indicator evaluator that can work with minute candles of the stock
          // This will auto sync with the new tick data that would be coming in for this symbol
@@ -79,7 +81,7 @@ namespace Algorum.Strategy.SupportResistance
          {
             Symbol = _symbol,
             CandlePeriod = CandlePeriod.Minute,
-            PeriodSpan = 1
+            PeriodSpan = 5
          } );
 
          // Subscribe to the symbols we want (one second tick data)
@@ -165,72 +167,36 @@ namespace Algorum.Strategy.SupportResistance
       /// <returns>Async Task</returns>
       public override async Task OnTickAsync( TickData tickData )
       {
-         _state.CurrentTick = tickData;
-
-         // Get the support and resistance values
-         var (supportValue, supportScore, resistanceValue, resistanceScore) = await _indicatorEvaluator.SUPPORTRESISTANCEAsync( 60, 0, 10 );
-
-         if ( ( _state.LastTick == null ) || ( tickData.Timestamp - _state.LastTick.Timestamp ).TotalMinutes >= 1 )
+         try
          {
-            await LogAsync( LogLevel.Debug, $"{tickData.Timestamp}, {tickData.LTP}, sv {supportValue}, ss {supportScore}, " +
-               $"rv {resistanceValue}, rs {resistanceScore}" );
-            _state.LastTick = tickData;
-         }
+            var prevTick = _state.CurrentTick;
+            _state.CurrentTick = tickData;
 
-         // We wait until the stock price touches below the support value
-         if ( !_state.TouchedSupport && supportScore > 0 && tickData.LTP <= supportValue && !_state.Bought )
-            _state.TouchedSupport = true;
-
-         // We BUY the stock when the stock price touches below the support value and then moves above the
-         // support value, and is below the half the distance to the resistance value
-         if ( supportScore > 0 && tickData.LTP > supportValue && resistanceScore > 0 &&
-            tickData.LTP < resistanceValue - ( ( resistanceValue - tickData.LTP ) / 2 ) && _state.TouchedSupport &&
-            ( !_state.Bought ) && ( string.IsNullOrWhiteSpace( _state.CurrentOrderId ) ) )
-         {
-            _state.TouchedSupport = false;
-
-            // Place buy order
-            _state.CurrentOrderId = Guid.NewGuid().ToString();
-            var qty = Math.Floor( Capital / tickData.LTP ) * Leverage;
-
-            await PlaceOrderAsync( new PlaceOrderRequest()
+            if ( prevTick == null || ( !_state.DayChanged && tickData.Timestamp.Day > prevTick.Timestamp.Day && !_state.Bought ) )
             {
-               OrderType = OrderType.Market,
-               Price = tickData.LTP,
-               Quantity = qty,
-               Symbol = _symbol,
-               Timestamp = tickData.Timestamp,
-               TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
-               TriggerPrice = tickData.LTP,
-               OrderDirection = OrderDirection.Buy,
-               SlippageType = SlippageType.TIME,
-               Slippage = 1000,
-               Tag = _state.CurrentOrderId
-            } );
+               _state.DayChanged = true;
+               await _indicatorEvaluator.ClearCandlesAsync();
+            }
 
-            // Store our state
-            await SetDataAsync( "state", _state );
+            // Get the RSI value
+            var rsi = await _indicatorEvaluator.RSIAsync( 14 );
 
-            // Log the buy initiation
-            var log = $"{tickData.Timestamp}, Placed buy order for {qty} units of {_symbol.Ticker} at price (approx) {tickData.LTP}, {tickData.Timestamp}";
-            await LogAsync( LogLevel.Information, log );
-
-            // DIAG::
-            Console.WriteLine( log );
-         }
-         else if ( _state.CurrentOrder != null )
-         {
-            if ( (
-                  ( tickData.LTP - _state.CurrentOrder.AveragePrice >= _state.CurrentOrder.AveragePrice * 0.25 / 100 ) ||
-                  ( _state.CurrentOrder.AveragePrice - tickData.LTP >= _state.CurrentOrder.AveragePrice * 0.25 / 100 ) )
-                  &&
-               ( _state.Bought ) )
+            if ( ( _state.LastTick == null ) || ( tickData.Timestamp - _state.LastTick.Timestamp ).TotalMinutes >= 1 )
             {
-               await LogAsync( LogLevel.Information, $"OAP {_state.CurrentOrder.AveragePrice}, LTP {tickData.LTP}" );
+               await LogAsync( LogLevel.Debug, $"{tickData.Timestamp}, {tickData.LTP}, rsi {rsi}" );
+               _state.LastTick = tickData;
+            }
 
-               // Place sell order
+            // We BUY the stock when the RSI value crosses below 30 (oversold condition)
+            if ( rsi > 0 && _state.CrossBelowObj.Evaluate( rsi, 30 ) &&
+               _state.DayChanged &&
+               ( !_state.Bought ) && ( string.IsNullOrWhiteSpace( _state.CurrentOrderId ) ) )
+            {
+               _state.DayChanged = false;
+
+               // Place buy order
                _state.CurrentOrderId = Guid.NewGuid().ToString();
-               var qty = _state.CurrentOrder.FilledQuantity;
+               var qty = Math.Floor( Capital / tickData.LTP ) * Leverage;
 
                await PlaceOrderAsync( new PlaceOrderRequest()
                {
@@ -241,27 +207,76 @@ namespace Algorum.Strategy.SupportResistance
                   Timestamp = tickData.Timestamp,
                   TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
                   TriggerPrice = tickData.LTP,
-                  OrderDirection = OrderDirection.Sell,
+                  OrderDirection = OrderDirection.Buy,
                   SlippageType = SlippageType.TIME,
                   Slippage = 1000,
                   Tag = _state.CurrentOrderId
                } );
 
-               _state.CurrentOrder = null;
-
                // Store our state
                await SetDataAsync( "state", _state );
 
-               // Log the sell initiation
-               var log = $"{tickData.Timestamp}, Placed sell order for {qty} units of {_symbol.Ticker} at price (approx) {tickData.LTP}, {tickData.Timestamp}";
+               // Log the buy initiation
+               var log = $"{tickData.Timestamp}, Placed buy order for {qty} units of {_symbol.Ticker} at price (approx) {tickData.LTP}, {tickData.Timestamp}";
                await LogAsync( LogLevel.Information, log );
 
                // DIAG::
                Console.WriteLine( log );
             }
-         }
+            else if ( _state.CurrentOrder != null )
+            {
+               if ( (
+                     ( tickData.LTP - _state.CurrentOrder.AveragePrice >= _state.CurrentOrder.AveragePrice * 0.25 / 100 ) ||
+                     ( _state.CurrentOrder.AveragePrice - tickData.LTP >= _state.CurrentOrder.AveragePrice * 0.5 / 100 ) )
+                     &&
+                  ( _state.Bought ) )
+               {
+                  await LogAsync( LogLevel.Information, $"OAP {_state.CurrentOrder.AveragePrice}, LTP {tickData.LTP}" );
 
-         await SendProgressAsync( tickData );
+                  // Place sell order
+                  _state.CurrentOrderId = Guid.NewGuid().ToString();
+                  var qty = _state.CurrentOrder.FilledQuantity;
+
+                  await PlaceOrderAsync( new PlaceOrderRequest()
+                  {
+                     OrderType = OrderType.Market,
+                     Price = tickData.LTP,
+                     Quantity = qty,
+                     Symbol = _symbol,
+                     Timestamp = tickData.Timestamp,
+                     TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
+                     TriggerPrice = tickData.LTP,
+                     OrderDirection = OrderDirection.Sell,
+                     SlippageType = SlippageType.TIME,
+                     Slippage = 1000,
+                     Tag = _state.CurrentOrderId
+                  } );
+
+                  _state.CurrentOrder = null;
+
+                  // Store our state
+                  await SetDataAsync( "state", _state );
+
+                  // Log the sell initiation
+                  var log = $"{tickData.Timestamp}, Placed sell order for {qty} units of {_symbol.Ticker} at price (approx) {tickData.LTP}, {tickData.Timestamp}";
+                  await LogAsync( LogLevel.Information, log );
+
+                  // DIAG::
+                  Console.WriteLine( log );
+               }
+            }
+         }
+         catch ( Exception ex )
+         {
+            await LogAsync( LogLevel.Error, ex.ToString() );
+
+            // DIAG::
+            Console.WriteLine( ex );
+         }
+         finally
+         {
+            await SendProgressAsync( tickData );
+         }
       }
 
       /// <summary>
@@ -295,8 +310,8 @@ namespace Algorum.Strategy.SupportResistance
       /// <returns>Backtest id</returns>
       public override async Task<string> BacktestAsync( BacktestRequest backtestRequest )
       {
-         // Preload candles
-         await _indicatorEvaluator.PreloadCandlesAsync( 210, backtestRequest.StartDate.AddDays( 1 ), backtestRequest.ApiKey, backtestRequest.ApiSecretKey );
+         // We don't Preload candles, as this trategy is based on daily RSI value.
+         //await _indicatorEvaluator.PreloadCandlesAsync( 210, backtestRequest.StartDate.AddDays( 1 ), backtestRequest.ApiKey, backtestRequest.ApiSecretKey );
 
          // Run backtest
          return await base.BacktestAsync( backtestRequest );

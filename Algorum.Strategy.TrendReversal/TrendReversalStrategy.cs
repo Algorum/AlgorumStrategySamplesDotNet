@@ -36,13 +36,13 @@ namespace Algorum.Strategy.TrendReversal
       private State _state;
 
       /// <summary>
-      /// Helps create GoldenCrossoverQuantStrategy class and initialize asynchornously
+      /// Helps create TrendReversalStrategy class and initialize asynchornously
       /// </summary>
       /// <param name="url">URL of the Quant Engine Server</param>
       /// <param name="apiKey">User Algorum API Key</param>
       /// <param name="launchMode">Launch mode of this strategy</param>
       /// <param name="sid">Unique Strategy Id</param>
-      /// <returns>Instance of GoldenCrossoverQuantStrategy class</returns>
+      /// <returns>Instance of TrendReversalStrategy class</returns>
       public static async Task<TrendReversalStrategy> GetInstanceAsync( string url, string apiKey, StrategyLaunchMode launchMode, string sid )
       {
          var strategy = new TrendReversalStrategy( url, apiKey, launchMode, sid );

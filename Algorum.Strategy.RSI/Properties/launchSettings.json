@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Algorum.Strategy.RSI": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
