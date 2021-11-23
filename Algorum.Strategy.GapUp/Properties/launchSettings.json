@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Algorum.Strategy.GapUp": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
