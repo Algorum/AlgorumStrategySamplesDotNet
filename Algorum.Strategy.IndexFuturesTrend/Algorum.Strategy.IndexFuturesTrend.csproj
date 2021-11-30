@@ -4,12 +4,12 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <Version>1.0.1</Version>
-    <PackageReleaseNotes>Updated the Algorum Quant Types package reference and corresponding changes.</PackageReleaseNotes>
-    <Authors>Algorum</Authors>
-    <Company>Algorum Software Private LimitedAlgorum</Company>
-    <Product>Algorum</Product>
+    <PackageReleaseNotes>Initial version of the strategy.</PackageReleaseNotes>
+    <Copyright>Algorum Software Private Limited</Copyright>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <Authors>Algorum</Authors>
+    <Company>Algorum Software Private Limited</Company>
+    <Product>Algorum</Product>
   </PropertyGroup>
 
   <ItemGroup>

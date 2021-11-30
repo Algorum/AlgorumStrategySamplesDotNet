@@ -189,7 +189,7 @@ namespace Algorum.Strategy.SupportResistance
             // AND if the today's open is atleast X percentage greater than yesterday's close.
             if ( yesterdayHigh > 0 && yesterdayClose > 0 &&
                todayOpen >= yesterdayHigh &&
-               todayOpen >= ( yesterdayClose + ( yesterdayClose * 0.75 / 100 ) ) &&
+               todayOpen >= ( yesterdayClose + ( yesterdayClose * 0.50 / 100 ) ) &&
                _state.DayChanged &&
                ( !_state.Bought ) && ( string.IsNullOrWhiteSpace( _state.CurrentOrderId ) ) )
             {

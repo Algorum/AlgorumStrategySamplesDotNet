@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Algorum.Strategy.IndexFuturesTrend": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
