@@ -283,7 +283,6 @@ namespace Algorum.Strategy.IndexFuturesTrend
                ( _state.IdxCurrentTick.Timestamp.Hour >= 9 ) && ( _state.IdxCurrentTick.Timestamp.Hour <= 14 ) &&
                ( ( ( _state.CurrentTick.Timestamp.Hour >= 9 ) && ( _state.CurrentTick.Timestamp.Minute >= 30 ) ) || ( _state.CurrentTick.Timestamp.Hour >= 10 ) ) &&
                _state.DayChanged &&
-               //( idxState.CurrentTick.LTP <= idxState.PrevTick.LTP - 15 ) &&
                direction == 2 && strength >= 10 &&
                ( !_state.Bought ) && ( string.IsNullOrWhiteSpace( _state.CurrentOrderId ) ) )
             {
@@ -293,7 +292,6 @@ namespace Algorum.Strategy.IndexFuturesTrend
                ( _state.IdxCurrentTick.Timestamp.Hour >= 9 ) && ( _state.IdxCurrentTick.Timestamp.Hour <= 14 ) &&
                ( ( ( _state.CurrentTick.Timestamp.Hour >= 9 ) && ( _state.CurrentTick.Timestamp.Minute >= 30 ) ) || ( _state.CurrentTick.Timestamp.Hour >= 10 ) ) &&
                _state.DayChanged &&
-               //( idxState.CurrentTick.LTP >= idxState.PrevTick.LTP + 15 ) &&
                direction == 1 && strength >= 10 &&
                ( !_state.Bought ) && ( string.IsNullOrWhiteSpace( _state.CurrentOrderId ) ) )
             {
