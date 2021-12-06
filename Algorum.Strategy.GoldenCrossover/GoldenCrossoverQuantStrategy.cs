@@ -40,16 +40,18 @@ namespace Algorum.Strategy.GoldenCrossover
       /// <param name="apiKey">User Algorum API Key</param>
       /// <param name="launchMode">Launch mode of this strategy</param>
       /// <param name="sid">Unique Strategy Id</param>
+      /// <param name="userId">User unique id</param>
       /// <returns>Instance of GoldenCrossoverQuantStrategy class</returns>
-      public static async Task<GoldenCrossoverQuantStrategy> GetInstanceAsync( string url, string apiKey, StrategyLaunchMode launchMode, string sid )
+      public static async Task<GoldenCrossoverQuantStrategy> GetInstanceAsync(
+         string url, string apiKey, StrategyLaunchMode launchMode, string sid, string userId )
       {
-         var strategy = new GoldenCrossoverQuantStrategy( url, apiKey, launchMode, sid );
+         var strategy = new GoldenCrossoverQuantStrategy( url, apiKey, launchMode, sid, userId );
          await strategy.InitializeAsync();
          return strategy;
       }
 
-      private GoldenCrossoverQuantStrategy( string url, string apiKey, StrategyLaunchMode launchMode, string sid )
-         : base( url, apiKey, launchMode, sid )
+      private GoldenCrossoverQuantStrategy( string url, string apiKey, StrategyLaunchMode launchMode, string sid, string userId )
+         : base( url, apiKey, launchMode, sid, userId )
       {
          // No-Op
       }

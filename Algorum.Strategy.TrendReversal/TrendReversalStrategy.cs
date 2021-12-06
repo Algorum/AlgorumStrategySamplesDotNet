@@ -43,15 +43,16 @@ namespace Algorum.Strategy.TrendReversal
       /// <param name="launchMode">Launch mode of this strategy</param>
       /// <param name="sid">Unique Strategy Id</param>
       /// <returns>Instance of TrendReversalStrategy class</returns>
-      public static async Task<TrendReversalStrategy> GetInstanceAsync( string url, string apiKey, StrategyLaunchMode launchMode, string sid )
+      public static async Task<TrendReversalStrategy> GetInstanceAsync(
+         string url, string apiKey, StrategyLaunchMode launchMode, string sid, string userId )
       {
-         var strategy = new TrendReversalStrategy( url, apiKey, launchMode, sid );
+         var strategy = new TrendReversalStrategy( url, apiKey, launchMode, sid, userId );
          await strategy.InitializeAsync();
          return strategy;
       }
 
-      private TrendReversalStrategy( string url, string apiKey, StrategyLaunchMode launchMode, string sid )
-         : base( url, apiKey, launchMode, sid )
+      private TrendReversalStrategy( string url, string apiKey, StrategyLaunchMode launchMode, string sid, string userId )
+         : base( url, apiKey, launchMode, sid, userId )
       {
          // No-Op
       }

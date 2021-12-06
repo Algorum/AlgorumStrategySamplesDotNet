@@ -17,6 +17,7 @@ namespace Algorum.Strategy.TrendReversal
 
          string url = config.GetValue<string>( "url" );
          string apiKey = config.GetValue<string>( "apiKey" );
+         string userId = config.GetValue<string>( "userId" );
          string sid = config.GetValue<string>( "sid" );
          string bkApiKey = config.GetValue<string>( "bkApiKey" );
          string bkApiSecretKey = config.GetValue<string>( "bkApiSecretKey" );
@@ -30,7 +31,7 @@ namespace Algorum.Strategy.TrendReversal
          url += $"?sid={sid}&apiKey={apiKey}&launchMode={launchMode}";
 
          // Create our strategy object
-         var strategy = await TrendReversalStrategy.GetInstanceAsync( url, apiKey, launchMode, sid );
+         var strategy = await TrendReversalStrategy.GetInstanceAsync( url, apiKey, launchMode, sid, userId );
 
          // If we are started in backtestign mode, start the backtest
          if ( launchMode == StrategyLaunchMode.Backtesting )
