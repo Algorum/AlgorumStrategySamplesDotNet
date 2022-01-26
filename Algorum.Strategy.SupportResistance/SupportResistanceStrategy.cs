@@ -69,7 +69,7 @@ namespace Algorum.Strategy.SupportResistance
 
          // Create our stock symbol object
          // For India users
-         _symbol = new Symbol() { SymbolType = SymbolType.FuturesIndex, Ticker = "NIFTY" };
+         _symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "TATAMOTORS" };
 
          // For USA users
          //_symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "AAPL" };

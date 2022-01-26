@@ -274,8 +274,12 @@ namespace Algorum.Strategy.IndexFuturesTrend
 
             if ( ( _state.LastTick == null ) || ( tickData.Timestamp - _state.LastTick.Timestamp ).TotalMinutes >= 1 )
             {
-               await LogAsync( LogLevel.Debug, $"{tickData.Timestamp}, {tickData.LTP}, d {direction}, s {strength}, bim {_state.BreakInMonth}" );
+               var log = $"{tickData.Timestamp}, {tickData.LTP}, d {direction}, s {strength}, bim {_state.BreakInMonth}";
+               await LogAsync( LogLevel.Debug, log );
                _state.LastTick = tickData;
+
+               // DIAG::
+               Console.WriteLine( log );
             }
 
             if ( _state.BreakInMonth && ( !_state.Bought ) )

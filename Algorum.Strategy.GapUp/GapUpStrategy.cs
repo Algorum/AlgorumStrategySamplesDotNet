@@ -42,7 +42,7 @@ namespace Algorum.Strategy.SupportResistance
       /// <param name="sid">Unique Strategy Id</param>
       /// <param name="userId">User unique id</param>
       /// <returns>Instance of GapUpStrategy class</returns>
-      public static async Task<GapUpStrategy> GetInstanceAsync( 
+      public static async Task<GapUpStrategy> GetInstanceAsync(
          string url, string apiKey, StrategyLaunchMode launchMode, string sid, string userId )
       {
          var strategy = new GapUpStrategy( url, apiKey, launchMode, sid, userId );
@@ -70,7 +70,7 @@ namespace Algorum.Strategy.SupportResistance
 
          // Create our stock symbol object
          // For India users
-         _symbol = new Symbol() { SymbolType = SymbolType.FuturesIndex, Ticker = "NIFTY" };
+         _symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "TATAMOTORS" };
 
          // For USA users
          //_symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "SPY" };

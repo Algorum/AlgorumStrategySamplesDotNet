@@ -30,6 +30,9 @@ namespace Algorum.Strategy.GoldenCrossover
 
          url += $"?sid={sid}&apiKey={apiKey}&launchMode={launchMode}";
 
+         // DIAG::
+         Console.WriteLine( $"engine url [{url}]" );
+
          // Create our strategy object
          var strategy = await GoldenCrossoverQuantStrategy.GetInstanceAsync( url, apiKey, launchMode, sid, userId );
 

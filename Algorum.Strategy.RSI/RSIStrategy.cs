@@ -24,6 +24,7 @@ namespace Algorum.Strategy.SupportResistance
          public string CurrentOrderId;
          public Order CurrentOrder;
          public CrossBelow CrossBelowObj;
+         public CrossAbove CrossAboveObj;
          public bool DayChanged;
       }
 
@@ -67,15 +68,16 @@ namespace Algorum.Strategy.SupportResistance
             _state = new State();
             _state.Orders = new List<Order>();
             _state.CrossBelowObj = new CrossBelow();
+            _state.CrossAboveObj = new CrossAbove();
             _state.DayChanged = false;
          }
 
          // Create our stock symbol object
          // For India users
-         //_symbol = new Symbol() { SymbolType = SymbolType.FuturesIndex, Ticker = "NIFTY" };
+         _symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "TATAMOTORS" };
 
          // For USA users
-         _symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "AAPL" };
+         //_symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "AAPL" };
 
          // Create the technical indicator evaluator that can work with minute candles of the stock
          // This will auto sync with the new tick data that would be coming in for this symbol
@@ -83,7 +85,7 @@ namespace Algorum.Strategy.SupportResistance
          {
             Symbol = _symbol,
             CandlePeriod = CandlePeriod.Minute,
-            PeriodSpan = 5
+            PeriodSpan = 60
          } );
 
          // Subscribe to the symbols we want (one second tick data)
@@ -177,21 +179,22 @@ namespace Algorum.Strategy.SupportResistance
             if ( prevTick == null || ( !_state.DayChanged && tickData.Timestamp.Day > prevTick.Timestamp.Day && !_state.Bought ) )
             {
                _state.DayChanged = true;
-               await _indicatorEvaluator.ClearCandlesAsync();
             }
 
             // Get the RSI value
             var rsi = await _indicatorEvaluator.RSIAsync( 14 );
+            var (direction, strength) = await _indicatorEvaluator.TRENDAsync( 14 );
 
             if ( ( _state.LastTick == null ) || ( tickData.Timestamp - _state.LastTick.Timestamp ).TotalMinutes >= 1 )
             {
-               await LogAsync( LogLevel.Debug, $"{tickData.Timestamp}, {tickData.LTP}, rsi {rsi}" );
+               await LogAsync( LogLevel.Debug, $"{tickData.Timestamp}, {tickData.LTP}, rsi {rsi}, direction {direction}, strength {strength}" );
                _state.LastTick = tickData;
             }
 
             // We BUY the stock when the RSI value crosses below 30 (oversold condition)
-            if ( rsi > 0 && _state.CrossBelowObj.Evaluate( rsi, 30 ) &&
-               _state.DayChanged &&
+            if (
+               rsi > 0 && _state.CrossBelowObj.Evaluate( rsi, 30 ) &&
+               direction == 2 && strength >= 7 &&
                ( !_state.Bought ) && ( string.IsNullOrWhiteSpace( _state.CurrentOrderId ) ) )
             {
                _state.DayChanged = false;
@@ -228,8 +231,8 @@ namespace Algorum.Strategy.SupportResistance
             else if ( _state.CurrentOrder != null )
             {
                if ( (
-                     ( tickData.LTP - _state.CurrentOrder.AveragePrice >= _state.CurrentOrder.AveragePrice * 0.25 / 100 ) ||
-                     ( _state.CurrentOrder.AveragePrice - tickData.LTP >= _state.CurrentOrder.AveragePrice * 0.25 / 100 ) )
+                     ( tickData.LTP - _state.CurrentOrder.AveragePrice >= _state.CurrentOrder.AveragePrice * 0.1 / 100 ) ||
+                     tickData.Timestamp.Hour >= 15 )
                      &&
                   ( _state.Bought ) )
                {
@@ -313,7 +316,7 @@ namespace Algorum.Strategy.SupportResistance
       public override async Task<string> BacktestAsync( BacktestRequest backtestRequest )
       {
          // We don't Preload candles, as this trategy is based on daily RSI value.
-         //await _indicatorEvaluator.PreloadCandlesAsync( 210, backtestRequest.StartDate.AddDays( 1 ), backtestRequest.ApiKey, backtestRequest.ApiSecretKey );
+         await _indicatorEvaluator.PreloadCandlesAsync( 20, backtestRequest.StartDate.AddDays( 1 ), backtestRequest.ApiKey, backtestRequest.ApiSecretKey );
 
          // Run backtest
          return await base.BacktestAsync( backtestRequest );

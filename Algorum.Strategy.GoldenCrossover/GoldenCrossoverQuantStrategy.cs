@@ -27,7 +27,7 @@ namespace Algorum.Strategy.GoldenCrossover
       }
 
       public const double Capital = 100000;
-      private const double Leverage = 3; // 3x Leverage on Capital
+      private const double Leverage = 1; // 1x Leverage on Capital
 
       private Symbol _symbol;
       private IIndicatorEvaluator _indicatorEvaluator;
@@ -70,10 +70,10 @@ namespace Algorum.Strategy.GoldenCrossover
 
          // Create our stock symbol object
          // For India users
-         _symbol = new Symbol() { SymbolType = SymbolType.FuturesIndex, Ticker = "NIFTY" };
+         _symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "TATAMOTORS" };
 
          // For USA users
-         //_symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "MSFT" };
+         //_symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "SPY" };
 
          // Create the technical indicator evaluator that can work with minute candles of the stock
          // This will auto sync with the new tick data that would be coming in for this symbol
@@ -175,8 +175,12 @@ namespace Algorum.Strategy.GoldenCrossover
 
          if ( ( _state.LastTick == null ) || ( tickData.Timestamp - _state.LastTick.Timestamp ).TotalMinutes >= 1 )
          {
-            await LogAsync( LogLevel.Debug, $"{tickData.Timestamp}, {tickData.LTP}, ema50 {ema50}, ema200 {ema200}" );
+            var log = $"{tickData.Timestamp}, {tickData.LTP}, ema50 {ema50}, ema200 {ema200}";
+            await LogAsync( LogLevel.Debug, log );
             _state.LastTick = tickData;
+
+            // DIAG::
+            Console.WriteLine( log );
          }
 
          if ( ema50 > 0 && ema200 > 0 && _state.CrossAboveObj.Evaluate( ema50, ema200 ) && ( !_state.Bought ) &&
@@ -184,7 +188,7 @@ namespace Algorum.Strategy.GoldenCrossover
          {
             // Place buy order
             _state.CurrentOrderId = Guid.NewGuid().ToString();
-            var qty = Math.Floor( Capital / tickData.LTP ) * Leverage;
+            var qty = ( Capital / tickData.LTP ) * Leverage;
 
             await PlaceOrderAsync( new PlaceOrderRequest()
             {
@@ -214,7 +218,7 @@ namespace Algorum.Strategy.GoldenCrossover
          else if ( _state.CurrentOrder != null )
          {
             if ( (
-                  ( tickData.LTP - _state.CurrentOrder.AveragePrice >= _state.CurrentOrder.AveragePrice * 0.25 / 100 ) ||
+                  ( tickData.LTP - _state.CurrentOrder.AveragePrice >= _state.CurrentOrder.AveragePrice * 0.10 / 100 ) ||
                   ( _state.CurrentOrder.AveragePrice - tickData.LTP >= _state.CurrentOrder.AveragePrice * 0.50 / 100 ) )
                   &&
                ( _state.Bought ) )
