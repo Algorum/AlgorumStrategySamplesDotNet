@@ -233,8 +233,7 @@ namespace Algorum.Strategy.GoldenCrossover
             if ( ( ( (
                   ( tickData.LTP - _state.CurrentOrder.AveragePrice >= _state.CurrentOrder.AveragePrice * 0.25 / 100 ) ||
                   ( _state.CurrentOrder.AveragePrice - tickData.LTP >= _state.CurrentOrder.AveragePrice * 0.5 / 100 ) ) &&
-                  tickData.Timestamp.Hour >= 10 && tickData.Timestamp.Hour < 15 ) ||
-                  tickData.Timestamp.Hour == 15 && tickData.Timestamp.Minute >= 15 ) &&
+                  tickData.Timestamp.Hour >= 10 && tickData.Timestamp.Hour < 15 ) ) &&
                ( _state.Bought ) )
             {
                await LogAsync( LogLevel.Information, $"OAP {_state.CurrentOrder.AveragePrice}, LTP {tickData.LTP}" );
