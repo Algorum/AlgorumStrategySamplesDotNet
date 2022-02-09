@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Algorum.Strategy.OptionsWrite": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

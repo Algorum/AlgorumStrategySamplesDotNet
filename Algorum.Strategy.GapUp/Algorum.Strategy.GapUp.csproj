@@ -4,13 +4,17 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <PackageReleaseNotes>Updated the Algorum Quant Types package reference and corresponding changes.</PackageReleaseNotes>
     <Authors>Algorum</Authors>
     <Company>Algorum Software Private LimitedAlgorum</Company>
     <Product>Algorum</Product>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="GapUpStrategyFutures.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="appsettings.json" />
@@ -36,7 +40,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Algorum.Quant.Types" Version="1.0.40" />
+    <PackageReference Include="Algorum.Quant.Types" Version="1.0.44" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="5.0.0" />

@@ -28,14 +28,6 @@ namespace Algorum.Strategy.GoldenCrossover
          public CrossAbove RSICrossAboveObj;
       }
 
-      class PLCalcState
-      {
-         public double SellVal;
-         public double BuyVal;
-         public double SellQty;
-         public double BuyQty;
-      }
-
       public const double Capital = 100000;
       private const double Leverage = 4; // 4x Leverage on Capital
 
@@ -146,7 +138,7 @@ namespace Algorum.Strategy.GoldenCrossover
 
                _state.CurrentOrderId = string.Empty;
 
-               var stats = GetStats( _state.CurrentTick );
+               var stats = await GetStatsAsync( _state.CurrentTick );
                await SendAsync( "publish_stats", stats );
 
                foreach ( var kvp in stats )
@@ -181,12 +173,12 @@ namespace Algorum.Strategy.GoldenCrossover
          _state.CurrentTick = tickData;
 
          // Get the EMA values
-         var ema50 = await _indicatorEvaluator.EMAAsync( 50 );
-         var ema200 = await _indicatorEvaluator.EMAAsync( 200 );
+         var ema10 = await _indicatorEvaluator.EMAAsync( 10 );
+         var ema20 = await _indicatorEvaluator.EMAAsync( 20 );
 
          if ( ( _state.LastTick == null ) || ( tickData.Timestamp - _state.LastTick.Timestamp ).TotalMinutes >= 1 )
          {
-            var log = $"{tickData.Timestamp}, {tickData.LTP}, ema50 {ema50}, ema200 {ema200}";
+            var log = $"{tickData.Timestamp}, {tickData.LTP}, ema10 {ema10}, ema20 {ema20}";
             await LogAsync( LogLevel.Debug, log );
             _state.LastTick = tickData;
 
@@ -194,8 +186,8 @@ namespace Algorum.Strategy.GoldenCrossover
             Console.WriteLine( log );
          }
 
-         if ( ema50 > 0 && ema200 > 0 &&
-            _state.CrossAboveObj.Evaluate( ema50, ema200 ) && ( !_state.Bought ) &&
+         if ( ema10 > 0 && ema20 > 0 &&
+            _state.CrossAboveObj.Evaluate( ema10, ema20 ) && ( !_state.Bought ) &&
             tickData.Timestamp.Hour > 9 && tickData.Timestamp.Hour < 15 &&
             ( string.IsNullOrWhiteSpace( _state.CurrentOrderId ) ) )
          {
@@ -312,134 +304,59 @@ namespace Algorum.Strategy.GoldenCrossover
          return await base.BacktestAsync( backtestRequest );
       }
 
-      public override Dictionary<string, object> GetStats( TickData tickData )
+      private async Task<StrategyRunSummary> GetStrategyRunSummaryAsync()
       {
-         var (pl, dd, statsMap) = GetStats( Capital, _state.Orders, new List<KeyValuePair<Symbol, TickData>>() {
-            new KeyValuePair<Symbol, TickData>(_symbol,_state.CurrentTick)
-         } );
+         if ( _symbol == null )
+            return null;
 
-         var stats = statsMap.FirstOrDefault( obj => obj.Key.Equals( _symbol ) ).Value;
+         var symbolState = _state;
 
-         if ( stats == null )
-            stats = new Dictionary<string, object>();
+         var summary = await GetStrategyRunSummaryAsync( Capital, ( symbolState.CurrentTick != null ? new List<KeyValuePair<Symbol, TickData>>()
+            {
+               new KeyValuePair<Symbol, TickData>(_symbol, symbolState.CurrentTick)
+            } : null ) );
 
-         return stats;
+         return summary;
       }
 
-      private static (double totalPL, double totalDrawdown, List<KeyValuePair<Symbol, Dictionary<string, object>>> symbolStats) GetStats(
-                        double capital,
-                        List<Order> orders,
-                        List<KeyValuePair<Symbol, TickData>> symbolLastTicks )
+      public async override Task<Dictionary<string, object>> GetStatsAsync( TickData tickData )
       {
-         var symbolStats = new List<KeyValuePair<Symbol, Dictionary<string, object>>>();
+         if ( _symbol == null )
+            return new Dictionary<string, object>();
 
-         var symbolOrders = from order in orders
-                            group order by new { Symbol = order.Symbol } into d
-                            select new { Symbol = d.Key.Symbol, Orders = d.ToList() };
-
-         Dictionary<Symbol, PLCalcState> stateCalcMap = new Dictionary<Symbol, PLCalcState>();
-         double totalPL = 0;
-         double totalDrawdown = 0;
-         double totalMaxPL = 0;
-         double totalMinPL = 0;
-
-         foreach ( var symbolOrder in symbolOrders )
+         try
          {
             var statsMap = new Dictionary<string, object>();
-            stateCalcMap.Add( symbolOrder.Symbol, new PLCalcState() );
+            var symbolState = _state;
 
-            statsMap["Capital"] = capital;
-            statsMap["Order Count"] = symbolOrder.Orders.Count;
+            var summary = await GetStrategyRunSummaryAsync();
 
-            var groupedOrders = from order in symbolOrder.Orders
-                                group order by new { Month = order.OrderTimestamp.Value.Month, Year = order.OrderTimestamp.Value.Year } into d
-                                select new { Date = $"{d.Key.Month:00}-{d.Key.Year:0000}", Orders = d.ToList() };
+            statsMap.Add( "Total Capital", summary.Capital );
+            statsMap.Add( "Total PL", summary.PL );
+            statsMap.Add( "Total Max Draw Down", summary.MaxDrawdown );
 
-            double pl = 0;
-            double drawdown = 0;
-            double maxPL = 0;
-            double minPL = 0;
+            KeyValuePair<Symbol, Dictionary<string, object>> stats = default( KeyValuePair<Symbol, Dictionary<string, object>> );
 
-            foreach ( var orderGroup in groupedOrders )
+            if ( summary != null && summary.SymbolStats != null )
             {
-               foreach ( var order in orderGroup.Orders )
+               stats = summary.SymbolStats.FirstOrDefault( obj => obj.Key.Equals( _symbol ) );
+
+               if ( stats.Key != null && stats.Value != null )
                {
-                  try
+                  foreach ( var kvp in stats.Value )
                   {
-                     var orderStatePLCalc = stateCalcMap[order.Symbol];
-
-                     if ( ( order.Status == OrderStatus.Completed ) && ( order.OrderDirection == OrderDirection.Buy ) )
-                     {
-                        orderStatePLCalc.BuyVal += order.FilledQuantity * order.AveragePrice;
-                        orderStatePLCalc.BuyQty += order.FilledQuantity;
-                     }
-
-                     if ( ( order.Status == OrderStatus.Completed ) && ( order.OrderDirection == OrderDirection.Sell ) )
-                     {
-                        orderStatePLCalc.SellVal += order.FilledQuantity * order.AveragePrice;
-                        orderStatePLCalc.SellQty += order.FilledQuantity;
-                     }
-                  }
-                  catch ( Exception ex )
-                  {
-                     Console.WriteLine( ex );
+                     statsMap.Add( $"{stats.Key}-{kvp.Key}", kvp.Value );
                   }
                }
-
-               var orderStatePLCalcOuter = stateCalcMap[symbolOrder.Symbol];
-               double ltp = 0;
-
-               if ( symbolLastTicks != null && symbolLastTicks.Count > 0 )
-                  ltp = symbolLastTicks.FirstOrDefault( obj => obj.Key.Equals( symbolOrder.Symbol ) ).Value.LTP;
-               else
-                  ltp = orderGroup.Orders.Last().LastTick.LTP;
-
-               if ( orderStatePLCalcOuter.SellQty < orderStatePLCalcOuter.BuyQty )
-                  orderStatePLCalcOuter.SellVal += ( orderStatePLCalcOuter.BuyQty - orderStatePLCalcOuter.SellQty ) * ltp;
-
-               if ( orderStatePLCalcOuter.BuyQty < orderStatePLCalcOuter.SellQty )
-                  orderStatePLCalcOuter.BuyVal += ( orderStatePLCalcOuter.SellQty - orderStatePLCalcOuter.BuyQty ) * ltp;
-
-               double plMonth = 0;
-
-               foreach ( var orderSymbol in orderGroup.Orders.Select( obj => obj.Symbol ).Distinct() )
-               {
-                  var orderStatePLCalcObj = stateCalcMap[orderSymbol];
-                  plMonth += orderStatePLCalcObj.SellVal - orderStatePLCalcObj.BuyVal;
-               }
-
-               statsMap[$"PL-{orderGroup.Date}"] = plMonth;
-               pl += plMonth;
-
-               maxPL = Math.Max( pl, maxPL );
-
-               if ( pl < 0 )
-                  minPL = Math.Min( pl, minPL );
             }
 
-            if ( minPL == 0 )
-               drawdown = 0;
-            else
-               drawdown = ( Math.Abs( minPL ) / ( maxPL + capital ) ) * 100;
-
-            statsMap["PL"] = pl;
-            statsMap["DrawDown"] = drawdown;
-
-            symbolStats.Add( new KeyValuePair<Symbol, Dictionary<string, object>>( symbolOrder.Symbol, statsMap ) );
-            totalPL += pl;
-
-            totalMaxPL = Math.Max( totalPL, totalMaxPL );
-
-            if ( totalPL < 0 )
-               totalMinPL = Math.Min( totalPL, totalMinPL );
+            return statsMap;
          }
-
-         if ( totalMinPL == 0 )
-            totalDrawdown = 0;
-         else
-            totalDrawdown = ( Math.Abs( totalMinPL ) / ( totalMaxPL + capital ) ) * 100;
-
-         return (totalPL, totalDrawdown, symbolStats);
+         catch ( Exception ex )
+         {
+            Console.WriteLine( ex );
+            return new Dictionary<string, object>();
+         }
       }
    }
 }

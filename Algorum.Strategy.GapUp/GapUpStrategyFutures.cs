@@ -359,41 +359,59 @@ namespace Algorum.Strategy.SupportResistance
          return await base.BacktestAsync( backtestRequest );
       }
 
-      public override Dictionary<string, object> GetStats( TickData tickData )
+      private async Task<StrategyRunSummary> GetStrategyRunSummaryAsync()
       {
-         var statsMap = new Dictionary<string, object>();
+         if ( _symbolCurrentMonthFutures == null )
+            return null;
 
-         statsMap["Capital"] = Capital;
-         statsMap["Order Count"] = _state.Orders.Count;
+         var symbolState = _symbolCurrentMonthFutures;
 
-         double buyVal = 0;
-         double sellVal = 0;
-         double buyQty = 0;
-         double sellQty = 0;
+         var summary = await GetStrategyRunSummaryAsync( Capital, ( symbolState.CurrentTick != null ? new List<KeyValuePair<Symbol, TickData>>()
+            {
+               new KeyValuePair<Symbol, TickData>(_symbolOptionsPE, symbolState.CurrentTick)
+            } : null ) );
 
-         foreach ( var order in _state.Orders )
+         return summary;
+      }
+
+      public async override Task<Dictionary<string, object>> GetStatsAsync( TickData tickData )
+      {
+         if ( _symbolOptionsPE == null )
+            return new Dictionary<string, object>();
+
+         try
          {
-            if ( ( order.Status == OrderStatus.Completed ) && ( order.OrderDirection == OrderDirection.Buy ) && order.Symbol.IsMatch( tickData ) )
+            var statsMap = new Dictionary<string, object>();
+            var symbolState = _stateMap[_symbolOptionsPE];
+
+            var summary = await GetStrategyRunSummaryAsync();
+
+            statsMap.Add( "Total Capital", summary.Capital );
+            statsMap.Add( "Total PL", summary.PL );
+            statsMap.Add( "Total Max Draw Down", summary.MaxDrawdown );
+
+            KeyValuePair<Symbol, Dictionary<string, object>> stats = default( KeyValuePair<Symbol, Dictionary<string, object>> );
+
+            if ( summary != null && summary.SymbolStats != null )
             {
-               buyVal += order.FilledQuantity * order.AveragePrice;
-               buyQty += order.FilledQuantity;
+               stats = summary.SymbolStats.FirstOrDefault( obj => obj.Key.Equals( _symbolOptionsPE ) );
+
+               if ( stats.Key != null && stats.Value != null )
+               {
+                  foreach ( var kvp in stats.Value )
+                  {
+                     statsMap.Add( $"{stats.Key}-{kvp.Key}", kvp.Value );
+                  }
+               }
             }
 
-            if ( ( order.Status == OrderStatus.Completed ) && ( order.OrderDirection == OrderDirection.Sell ) && order.Symbol.IsMatch( tickData ) )
-            {
-               sellVal += order.FilledQuantity * order.AveragePrice;
-               sellQty += order.FilledQuantity;
-            }
+            return statsMap;
          }
-
-         if ( buyQty < sellQty )
-            buyVal += ( sellQty - buyQty ) * tickData.LTP;
-
-         double pl = sellVal - buyVal;
-         statsMap["PL"] = pl;
-         statsMap["Portfolio Value"] = Capital + pl;
-
-         return statsMap;
+         catch ( Exception ex )
+         {
+            Console.WriteLine( ex );
+            return new Dictionary<string, object>();
+         }
       }
 
       public DateTime GetNextWeeklyClosureDay( DateTime date, DayOfWeek dayofweek )
