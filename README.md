@@ -4,4 +4,4 @@ Welcome to Algorum Samples Repo for .NET/C# developers. Here you will find a VS 
 
 You would need Algorum CLI to get started with Algorum and run these samples. Get started at [Algorum Developer Hub](https://docs.algorumsoftware.com/docs "Algorum Developer Hub").
 
-For information on ALgorum Platform visit our website at https://www.algorumsoftware.com
+For information on Algorum Platform visit our website at https://www.algorumsoftware.com
