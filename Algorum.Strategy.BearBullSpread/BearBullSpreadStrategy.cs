@@ -48,7 +48,7 @@ namespace Algorum.Strategy.BearBullSpread
       private const int UP_DIRECTION = 1;
       private const int DOWN_DIRECTION = 2;
       private const int SIGNAL_STRENGTH = 7;
-      private const double STRIKE_DISTANCE_PERCENT = 3.0;
+      private const double STRIKE_DISTANCE_PERCENT = 2.0;
       private const int LOT_SIZE_2020 = 75;
       private const int LOT_SIZE_2021 = 50;
       private const int STRIKE_DISTANCE = 50;
