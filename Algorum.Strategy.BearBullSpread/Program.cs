@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Algorum.Quant.Types;
 using Microsoft.Extensions.Configuration;
 
-namespace Algorum.Strategy.GapUp
+namespace Algorum.Strategy.BearBullSpread
 {
    class Program
    {
@@ -31,7 +31,7 @@ namespace Algorum.Strategy.GapUp
          url += $"?sid={sid}&apiKey={apiKey}&launchMode={launchMode}";
 
          // Create our strategy object
-         var strategy = await GapUpStrategy.GetInstanceAsync( url, apiKey, launchMode, sid, userId );
+         var strategy = await BearBullSpreadStrategy.GetInstanceAsync( url, apiKey, launchMode, sid, userId );
 
          // If we are started in backtestign mode, start the backtest
          if ( launchMode == StrategyLaunchMode.Backtesting )
@@ -47,7 +47,7 @@ namespace Algorum.Strategy.GapUp
                ApiSecretKey = bkApiSecretKey,
                SamplingTimeInSeconds = samplingTime,
                BrokeragePlatform = brokeragePlatform,
-               Capital = GapUpStrategy.Capital
+               Capital = BearBullSpreadStrategy.Capital
             } );
          }
          else
@@ -62,7 +62,7 @@ namespace Algorum.Strategy.GapUp
                TwoFactorAuth = twoFactorAuth,
                SamplingTimeInSeconds = samplingTime,
                BrokeragePlatform = brokeragePlatform,
-               Capital = GapUpStrategy.Capital
+               Capital = BearBullSpreadStrategy.Capital
             } );
          }
 

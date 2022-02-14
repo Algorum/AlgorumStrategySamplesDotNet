@@ -24,11 +24,13 @@ namespace Algorum.Strategy.TrendReversal
          public List<Order> Orders;
          public string CurrentOrderId;
          public Order CurrentOrder;
-         public bool DirectionReversed;
+         public CrossBelow CrossBelowObj;
+         public CrossBelow CrossBelowShortObj;
+         public bool Short;
       }
 
-      public const double Capital = 100000;
-      private const double Leverage = 1; // 1x Leverage on margin by Brokerage
+      public const double Capital = 30000;
+      private const double Leverage = 2; // 1x Leverage on margin by Brokerage
       private const int DIRECTION_UP = 1;
       private const int DIRECTION_DOWN = 2;
 
@@ -67,15 +69,16 @@ namespace Algorum.Strategy.TrendReversal
          {
             _state = new State();
             _state.Orders = new List<Order>();
-            _state.DirectionReversed = true;
+            _state.CrossBelowObj = new CrossBelow();
+            _state.CrossBelowShortObj = new CrossBelow();
          }
 
          // Create our stock symbol object
          // For India users
-         _symbol = new Symbol() { SymbolType = SymbolType.FuturesStock, Ticker = "TATAMOTORS" };
+         _symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "TATAMOTORS" };
 
          // For USA users
-         //_symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "AAPL" };
+         //_symbol = new Symbol() { SymbolType = SymbolType.Stock, Ticker = "SPY" };
 
          // Create the technical indicator evaluator that can work with minute candles of the stock
          // This will auto sync with the new tick data that would be coming in for this symbol
@@ -110,29 +113,61 @@ namespace Algorum.Strategy.TrendReversal
                lock ( _state )
                   _state.Orders.Add( order );
 
-               if ( order.OrderDirection == OrderDirection.Buy )
+               if ( !_state.Short )
                {
-                  _state.Bought = true;
-                  _state.CurrentOrder = order;
+                  if ( order.OrderDirection == OrderDirection.Buy )
+                  {
+                     _state.Bought = true;
+                     _state.CurrentOrder = order;
 
-                  // Log the buy
-                  var log = $"{order.OrderTimestamp}, Order Id {order.OrderId}, Bought {order.FilledQuantity} units of {order.Symbol.Ticker} at price {order.AveragePrice}";
-                  await LogAsync( LogLevel.Information, log );
+                     // Log the buy
+                     var log = $"{order.OrderTimestamp}, Order Id {order.OrderId}, Bought {order.FilledQuantity} units of {order.Symbol.Ticker} at price {order.AveragePrice}";
+                     await LogAsync( LogLevel.Information, log );
 
-                  // DIAG::
-                  Console.WriteLine( log );
+                     // DIAG::
+                     Console.WriteLine( log );
+                  }
+                  else
+                  {
+                     _state.Bought = false;
+                     _state.CurrentOrder = null;
+                     _state.Short = false;
+
+                     // Log the sell
+                     var log = $"{order.OrderTimestamp}, Order Id {order.OrderId}, Sold {order.FilledQuantity} units of {order.Symbol.Ticker} at price {order.AveragePrice}";
+                     await LogAsync( LogLevel.Information, log );
+
+                     // DIAG::
+                     Console.WriteLine( log );
+                  }
                }
                else
                {
-                  _state.Bought = false;
-                  _state.CurrentOrder = null;
+                  if ( order.OrderDirection == OrderDirection.Sell )
+                  {
+                     _state.Bought = true;
+                     _state.CurrentOrder = order;
 
-                  // Log the sell
-                  var log = $"{order.OrderTimestamp}, Order Id {order.OrderId}, Sold {order.FilledQuantity} units of {order.Symbol.Ticker} at price {order.AveragePrice}";
-                  await LogAsync( LogLevel.Information, log );
+                     // Log the sell
+                     var log = $"{order.OrderTimestamp}, Order Id {order.OrderId}, Sold (Short) {order.FilledQuantity} units of {order.Symbol.Ticker} at price {order.AveragePrice}";
+                     await LogAsync( LogLevel.Information, log );
 
-                  // DIAG::
-                  Console.WriteLine( log );
+                     // DIAG::
+                     Console.WriteLine( log );
+                  }
+                  else
+                  {
+                     _state.Bought = false;
+                     _state.CurrentOrder = null;
+                     _state.Short = false;
+
+                     // Log the buy
+                     var log = $"{order.OrderTimestamp}, Order Id {order.OrderId}, Bought (Short) {order.FilledQuantity} units of {order.Symbol.Ticker} at price {order.AveragePrice}";
+                     await LogAsync( LogLevel.Information, log );
+
+                     // DIAG::
+                     Console.WriteLine( log );
+                  }
                }
 
                _state.CurrentOrderId = string.Empty;
@@ -171,76 +206,69 @@ namespace Algorum.Strategy.TrendReversal
       {
          _state.CurrentTick = tickData;
 
-         // Get the long and short trend
-         var (longDirection, longStrength) = await _indicatorEvaluator.TRENDAsync( 60 );
-         var (shortDirection, shortStrength) = await _indicatorEvaluator.TRENDAsync( 10 );
+         // Get the trend and strength
+         var (direction, strength) = await _indicatorEvaluator.TRENDAsync( 60 );
+         var rsi = await _indicatorEvaluator.RSIAsync( 14 );
 
          if ( ( _state.LastTick == null ) || ( tickData.Timestamp - _state.LastTick.Timestamp ).TotalMinutes >= 1 )
          {
-            await LogAsync( LogLevel.Debug, $"{tickData.Timestamp}, {tickData.LTP}, ld {longDirection}, ls {longStrength}, " +
-               $"sd {shortDirection}, ss {shortStrength}" );
+            var log = $"{tickData.Timestamp}, {tickData.Symbol}, {tickData.LTP}, ld {direction}, ls {strength}, rsi {rsi}";
+            await LogAsync( LogLevel.Debug, log );
             _state.LastTick = tickData;
-         }
-
-         // We wait until the long direction is going up and short direction is going down
-         if ( !_state.DirectionReversed && longDirection == DIRECTION_UP && shortDirection == DIRECTION_DOWN )
-            _state.DirectionReversed = true;
-
-         // We BUY the stock when the long direction was strongly DOWN and the short direction just started moving UP
-         if ( longDirection == DIRECTION_DOWN && longStrength >= 7 && shortDirection == DIRECTION_UP && shortStrength >= 5 && _state.DirectionReversed &&
-            ( !_state.Bought ) && ( string.IsNullOrWhiteSpace( _state.CurrentOrderId ) ) )
-         {
-            _state.DirectionReversed = false;
-
-            // Place buy order
-            _state.CurrentOrderId = Guid.NewGuid().ToString();
-            var qty = Math.Floor( Capital / tickData.LTP ) * Leverage;
-
-            await PlaceOrderAsync( new PlaceOrderRequest()
-            {
-               OrderType = OrderType.Market,
-               Price = tickData.LTP,
-               Quantity = qty,
-               Symbol = _symbol,
-               Timestamp = tickData.Timestamp,
-               TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
-               TriggerPrice = tickData.LTP,
-               OrderDirection = OrderDirection.Buy,
-               SlippageType = SlippageType.TIME,
-               Slippage = 1000,
-               Tag = _state.CurrentOrderId
-            } );
-
-            // Store our state
-            await SetDataAsync( "state", _state );
-
-            // Log the buy initiation
-            var log = $"{tickData.Timestamp}, Placed buy order for {qty} units of {_symbol.Ticker} at price (approx) {tickData.LTP}, {tickData.Timestamp}";
-            await LogAsync( LogLevel.Information, log );
 
             // DIAG::
             Console.WriteLine( log );
          }
-         else if ( _state.CurrentOrder != null )
+
+         // We BUY the stock when the direction was strongly DOWN and started moving UP and RSI is over sold
+         if (
+            (
+               ( direction == DIRECTION_DOWN && _state.CrossBelowObj.Evaluate( strength, 9 ) && rsi <= 40 ) ||
+               ( direction == DIRECTION_UP && _state.CrossBelowShortObj.Evaluate( strength, 9 ) && rsi >= 60 )
+            ) &&
+            ( !_state.Bought ) && ( string.IsNullOrWhiteSpace( _state.CurrentOrderId ) ) )
          {
-            if ( (
-                  ( tickData.LTP - _state.CurrentOrder.AveragePrice >= _state.CurrentOrder.AveragePrice * 0.25 / 100 ) ||
-                  ( _state.CurrentOrder.AveragePrice - tickData.LTP >= _state.CurrentOrder.AveragePrice * 0.50 / 100 ) )
-                  &&
-               ( _state.Bought ) )
+            // Place buy order
+            _state.CurrentOrderId = Guid.NewGuid().ToString();
+            var qty = Math.Floor( Capital / tickData.LTP ) * Leverage;
+
+            if ( direction == DIRECTION_DOWN )
             {
-               await LogAsync( LogLevel.Information, $"OAP {_state.CurrentOrder.AveragePrice}, LTP {tickData.LTP}" );
-
-               // Place sell order
-               _state.CurrentOrderId = Guid.NewGuid().ToString();
-               var qty = _state.CurrentOrder.FilledQuantity;
-
                await PlaceOrderAsync( new PlaceOrderRequest()
                {
                   OrderType = OrderType.Market,
                   Price = tickData.LTP,
                   Quantity = qty,
-                  Symbol = _symbol,
+                  Symbol = tickData.Symbol,
+                  Timestamp = tickData.Timestamp,
+                  TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
+                  TriggerPrice = tickData.LTP,
+                  OrderDirection = OrderDirection.Buy,
+                  SlippageType = SlippageType.TIME,
+                  Slippage = 1000,
+                  Tag = _state.CurrentOrderId
+               } );
+
+               _state.Short = false;
+
+               // Store our state
+               await SetDataAsync( "state", _state );
+
+               // Log the buy initiation
+               var log = $"{tickData.Timestamp}, Placed buy order for {qty} units of {tickData.Symbol.Ticker} at price (approx) {tickData.LTP}, {tickData.Timestamp}";
+               await LogAsync( LogLevel.Information, log );
+
+               // DIAG::
+               Console.WriteLine( log );
+            }
+            else if ( direction == DIRECTION_UP )
+            {
+               await PlaceOrderAsync( new PlaceOrderRequest()
+               {
+                  OrderType = OrderType.Market,
+                  Price = tickData.LTP,
+                  Quantity = qty,
+                  Symbol = tickData.Symbol,
                   Timestamp = tickData.Timestamp,
                   TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
                   TriggerPrice = tickData.LTP,
@@ -250,17 +278,104 @@ namespace Algorum.Strategy.TrendReversal
                   Tag = _state.CurrentOrderId
                } );
 
-               _state.CurrentOrder = null;
+               _state.Short = true;
 
                // Store our state
                await SetDataAsync( "state", _state );
 
-               // Log the sell initiation
-               var log = $"{tickData.Timestamp}, Placed sell order for {qty} units of {_symbol.Ticker} at price (approx) {tickData.LTP}, {tickData.Timestamp}";
+               // Log the buy initiation
+               var log = $"{tickData.Timestamp}, Placed sell (short) order for {qty} units of {tickData.Symbol.Ticker} at price (approx) {tickData.LTP}, {tickData.Timestamp}";
                await LogAsync( LogLevel.Information, log );
 
                // DIAG::
                Console.WriteLine( log );
+            }
+         }
+         else if ( _state.CurrentOrder != null )
+         {
+            if ( !_state.Short )
+            {
+               if ( (
+                     ( tickData.LTP - _state.CurrentOrder.AveragePrice >= _state.CurrentOrder.AveragePrice * 0.50 / 100 ) ||
+                     ( _state.CurrentOrder.AveragePrice - tickData.LTP >= _state.CurrentOrder.AveragePrice * 1.0 / 100 ) )
+                     &&
+                  ( _state.Bought ) )
+               {
+                  await LogAsync( LogLevel.Information, $"OAP {_state.CurrentOrder.AveragePrice}, LTP {tickData.LTP}" );
+
+                  // Place sell order
+                  _state.CurrentOrderId = Guid.NewGuid().ToString();
+                  var qty = _state.CurrentOrder.FilledQuantity;
+
+                  await PlaceOrderAsync( new PlaceOrderRequest()
+                  {
+                     OrderType = OrderType.Market,
+                     Price = tickData.LTP,
+                     Quantity = qty,
+                     Symbol = tickData.Symbol,
+                     Timestamp = tickData.Timestamp,
+                     TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
+                     TriggerPrice = tickData.LTP,
+                     OrderDirection = OrderDirection.Sell,
+                     SlippageType = SlippageType.TIME,
+                     Slippage = 1000,
+                     Tag = _state.CurrentOrderId
+                  } );
+
+                  _state.CurrentOrder = null;
+
+                  // Store our state
+                  await SetDataAsync( "state", _state );
+
+                  // Log the sell initiation
+                  var log = $"{tickData.Timestamp}, Placed sell order for {qty} units of {tickData.Symbol.Ticker} at price (approx) {tickData.LTP}, {tickData.Timestamp}";
+                  await LogAsync( LogLevel.Information, log );
+
+                  // DIAG::
+                  Console.WriteLine( log );
+               }
+            }
+            else
+            {
+               if ( (
+                     ( _state.CurrentOrder.AveragePrice - tickData.LTP >= _state.CurrentOrder.AveragePrice * 0.25 / 100 ) ||
+                     ( tickData.LTP - _state.CurrentOrder.AveragePrice >= _state.CurrentOrder.AveragePrice * 0.50 / 100 ) )
+                     &&
+                  ( _state.Bought ) )
+               {
+                  await LogAsync( LogLevel.Information, $"OAP {_state.CurrentOrder.AveragePrice}, LTP {tickData.LTP}" );
+
+                  // Place buy order
+                  _state.CurrentOrderId = Guid.NewGuid().ToString();
+                  var qty = _state.CurrentOrder.FilledQuantity;
+
+                  await PlaceOrderAsync( new PlaceOrderRequest()
+                  {
+                     OrderType = OrderType.Market,
+                     Price = tickData.LTP,
+                     Quantity = qty,
+                     Symbol = tickData.Symbol,
+                     Timestamp = tickData.Timestamp,
+                     TradeExchange = ( LaunchMode == StrategyLaunchMode.Backtesting || LaunchMode == StrategyLaunchMode.PaperTrading ) ? TradeExchange.PAPER : TradeExchange.NSE,
+                     TriggerPrice = tickData.LTP,
+                     OrderDirection = OrderDirection.Buy,
+                     SlippageType = SlippageType.TIME,
+                     Slippage = 1000,
+                     Tag = _state.CurrentOrderId
+                  } );
+
+                  _state.CurrentOrder = null;
+
+                  // Store our state
+                  await SetDataAsync( "state", _state );
+
+                  // Log the sell initiation
+                  var log = $"{tickData.Timestamp}, Placed buy (short) order for {qty} units of {tickData.Symbol.Ticker} at price (approx) {tickData.LTP}, {tickData.Timestamp}";
+                  await LogAsync( LogLevel.Information, log );
+
+                  // DIAG::
+                  Console.WriteLine( log );
+               }
             }
          }
 
@@ -286,7 +401,7 @@ namespace Algorum.Strategy.TrendReversal
       public override async Task StartTradingAsync( TradingRequest tradingRequest )
       {
          // Preload candles
-         await _indicatorEvaluator.PreloadCandlesAsync( 210, DateTime.UtcNow, tradingRequest.ApiKey, tradingRequest.ApiSecretKey );
+         await _indicatorEvaluator.PreloadCandlesAsync( 2, DateTime.UtcNow, tradingRequest.ApiKey, tradingRequest.ApiSecretKey );
 
          await base.StartTradingAsync( tradingRequest );
       }
@@ -299,7 +414,7 @@ namespace Algorum.Strategy.TrendReversal
       public override async Task<string> BacktestAsync( BacktestRequest backtestRequest )
       {
          // Preload candles
-         await _indicatorEvaluator.PreloadCandlesAsync( 210, backtestRequest.StartDate.AddDays( 1 ), backtestRequest.ApiKey, backtestRequest.ApiSecretKey );
+         await _indicatorEvaluator.PreloadCandlesAsync( 2, backtestRequest.StartDate.AddDays( 1 ), backtestRequest.ApiKey, backtestRequest.ApiSecretKey );
 
          // Run backtest
          return await base.BacktestAsync( backtestRequest );
@@ -307,24 +422,18 @@ namespace Algorum.Strategy.TrendReversal
 
       private async Task<StrategyRunSummary> GetStrategyRunSummaryAsync()
       {
-         if ( _symbol == null )
-            return null;
-
          var symbolState = _state;
 
          var summary = await GetStrategyRunSummaryAsync( Capital, ( symbolState.CurrentTick != null ? new List<KeyValuePair<Symbol, TickData>>()
             {
-               new KeyValuePair<Symbol, TickData>(_symbol, symbolState.CurrentTick)
-            } : null ) );
+               new KeyValuePair<Symbol, TickData>(symbolState.CurrentTick.Symbol, symbolState.CurrentTick)
+            } : null ), StatsType.Individual, 0 );
 
          return summary;
       }
 
       public async override Task<Dictionary<string, object>> GetStatsAsync( TickData tickData )
       {
-         if ( _symbol == null )
-            return new Dictionary<string, object>();
-
          try
          {
             var statsMap = new Dictionary<string, object>();
@@ -340,7 +449,7 @@ namespace Algorum.Strategy.TrendReversal
 
             if ( summary != null && summary.SymbolStats != null )
             {
-               stats = summary.SymbolStats.FirstOrDefault( obj => obj.Key.Equals( _symbol ) );
+               stats = summary.SymbolStats.FirstOrDefault( obj => obj.Key.Equals( tickData.Symbol ) );
 
                if ( stats.Key != null && stats.Value != null )
                {

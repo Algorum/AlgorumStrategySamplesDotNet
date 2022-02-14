@@ -657,7 +657,7 @@ namespace Algorum.Strategy.OptionsWrite
          var summary = await GetStrategyRunSummaryAsync( Capital, ( symbolState.CurrentTick != null ? new List<KeyValuePair<Symbol, TickData>>()
             {
                new KeyValuePair<Symbol, TickData>(_symbolOptionsPE, symbolState.CurrentTick)
-            } : null ) );
+            } : null ), StatsType.ExpiryPairedOptions, 2 );
 
          return summary;
       }

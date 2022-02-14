@@ -314,7 +314,7 @@ namespace Algorum.Strategy.SupportResistance
          var summary = await GetStrategyRunSummaryAsync( Capital, ( symbolState.CurrentTick != null ? new List<KeyValuePair<Symbol, TickData>>()
             {
                new KeyValuePair<Symbol, TickData>(_symbol, symbolState.CurrentTick)
-            } : null ) );
+            } : null ), StatsType.Individual, 0 );
 
          return summary;
       }

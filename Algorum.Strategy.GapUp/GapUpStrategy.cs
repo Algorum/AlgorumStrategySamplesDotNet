@@ -7,7 +7,7 @@ using Algorum.Quant.Types;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace Algorum.Strategy.SupportResistance
+namespace Algorum.Strategy.GapUp
 {
    /// <summary>
    /// Strategy classes should derive from the QuantEngineClient, 
@@ -331,7 +331,7 @@ namespace Algorum.Strategy.SupportResistance
          var summary = await GetStrategyRunSummaryAsync( Capital, ( symbolState.CurrentTick != null ? new List<KeyValuePair<Symbol, TickData>>()
             {
                new KeyValuePair<Symbol, TickData>(_symbol, symbolState.CurrentTick)
-            } : null ) );
+            } : null ), StatsType.Individual, 0 );
 
          return summary;
       }
