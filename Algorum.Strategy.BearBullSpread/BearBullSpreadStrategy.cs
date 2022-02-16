@@ -43,12 +43,13 @@ namespace Algorum.Strategy.BearBullSpread
          public CrossBelow CrossBelowDownObj;
       }
 
-      public const double Capital = 4000000;
+      public const double Capital = 1000000;
 
       private const int UP_DIRECTION = 1;
       private const int DOWN_DIRECTION = 2;
       private const int SIGNAL_STRENGTH = 7;
-      private const double STRIKE_DISTANCE_PERCENT = 2.0;
+      private const double STRIKE_DISTANCE_PERCENT = 1.0;
+      private const double STOP_LOSS_DISTANCE_PERCENT_FROM_STRIKE = 0.25;
       private const int LOT_SIZE_2020 = 75;
       private const int LOT_SIZE_2021 = 50;
       private const int STRIKE_DISTANCE = 50;
@@ -565,8 +566,16 @@ namespace Algorum.Strategy.BearBullSpread
                         _state.Bought &&
                         (
                            (
-                              ( ( idxState.CurrentTick.Timestamp.Hour > 9 ) && ( shortOptionState.CurrentOrder.Symbol.OptionType == OptionType.PE ) && ( idxState.CurrentTick.LTP <= shortOptionState.CurrentOrder.Symbol.OptionValue ) ) ||
-                              ( ( idxState.CurrentTick.Timestamp.Hour > 9 ) && ( shortOptionState.CurrentOrder.Symbol.OptionType == OptionType.CE ) && ( idxState.CurrentTick.LTP >= shortOptionState.CurrentOrder.Symbol.OptionValue ) )
+                              (
+                                 ( idxState.CurrentTick.Timestamp.Hour > 9 ) &&
+                                 ( shortOptionState.CurrentOrder.Symbol.OptionType == OptionType.PE ) &&
+                                 ( idxState.CurrentTick.LTP <= shortOptionState.CurrentOrder.Symbol.OptionValue + ( shortOptionState.CurrentOrder.Symbol.OptionValue * ( STOP_LOSS_DISTANCE_PERCENT_FROM_STRIKE / 100 ) ) )
+                              ) ||
+                              (
+                                 ( idxState.CurrentTick.Timestamp.Hour > 9 ) &&
+                                 ( shortOptionState.CurrentOrder.Symbol.OptionType == OptionType.CE ) &&
+                                 ( idxState.CurrentTick.LTP >= shortOptionState.CurrentOrder.Symbol.OptionValue - ( shortOptionState.CurrentOrder.Symbol.OptionValue * ( STOP_LOSS_DISTANCE_PERCENT_FROM_STRIKE / 100 ) ) )
+                               )
                            ) ||
                            ( idxState.CurrentTick.Timestamp.Hour == 15 &&
                            ( weeklyClosureDate.Date == idxState.CurrentTick.Timestamp.Date ) )
