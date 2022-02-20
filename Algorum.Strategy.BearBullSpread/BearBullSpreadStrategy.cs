@@ -47,17 +47,17 @@ namespace Algorum.Strategy.BearBullSpread
 
       private const int UP_DIRECTION = 1;
       private const int DOWN_DIRECTION = 2;
-      private const int SIGNAL_STRENGTH = 7;
+      private const int SIGNAL_STRENGTH = 5;
       private const double STRIKE_DISTANCE_PERCENT = 1.0;
       private const double STOP_LOSS_DISTANCE_PERCENT_FROM_STRIKE = 0.25;
-      private const int LOT_SIZE_2020 = 75;
-      private const int LOT_SIZE_2021 = 50;
-      private const int STRIKE_DISTANCE = 50;
-      private const int SPREAD_DISTANCE = 100;
+      private const int LOT_SIZE_2020 = 25;
+      private const int LOT_SIZE_2021 = 25;
+      private const int STRIKE_DISTANCE = 100;
+      private const int SPREAD_DISTANCE = 200;
       private const double Leverage = 15; // 15x Leverage (based on margin available for NIFTY options. may change. adjust accordingly)
 
-      private const string INDEX_TICKER = "NIFTY 50";
-      private const string OPTIONS_TICKER = "NIFTY";
+      private const string INDEX_TICKER = "NIFTY BANK";
+      private const string OPTIONS_TICKER = "BANKNIFTY";
 
       private Symbol _symbol;
       private Symbol _symbolOptionsShort;
